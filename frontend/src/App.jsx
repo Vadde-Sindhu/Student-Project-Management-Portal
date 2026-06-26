@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import axios from "axios";
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 const API = axios.create({ baseURL: "/api" });
 
@@ -20,24 +22,6 @@ const STATUS_CONFIG = {
   "in-progress": { label: "In Progress", badge: "badge-in-progress", icon: "🔄", dot: "bg-blue-400"   },
   completed:   { label: "Completed",   badge: "badge-completed",   icon: "✅", dot: "bg-green-400"  },
 };
-
-// ─── Toast ────────────────────────────────────────────────────────────────────
-function ToastContainer({ toasts, onRemove }) {
-  return (
-    <div className="fixed top-4 right-4 z-50 flex flex-col gap-2 max-w-sm w-full">
-      {toasts.map((t) => (
-        <div key={t.id} className={`animate-slide-up flex items-start gap-3 p-4 rounded-xl shadow-lg border text-sm font-medium
-          ${t.type === "success" ? "bg-green-50 border-green-200 text-green-800 dark:bg-green-900/40 dark:border-green-800 dark:text-green-300"
-          : t.type === "error"   ? "bg-red-50 border-red-200 text-red-800 dark:bg-red-900/40 dark:border-red-800 dark:text-red-300"
-          : "bg-blue-50 border-blue-200 text-blue-800 dark:bg-blue-900/40 dark:border-blue-800 dark:text-blue-300"}`}>
-          <span className="text-base">{t.type === "success" ? "✅" : t.type === "error" ? "❌" : "ℹ️"}</span>
-          <span className="flex-1">{t.message}</span>
-          <button onClick={() => onRemove(t.id)} className="text-current opacity-60 hover:opacity-100 transition-opacity">✕</button>
-        </div>
-      ))}
-    </div>
-  );
-}
 
 // ─── Confirm Modal ────────────────────────────────────────────────────────────
 function ConfirmModal({ isOpen, title, message, onConfirm, onCancel, loading }) {
@@ -225,7 +209,6 @@ export default function App() {
   const [search, setSearch]         = useState("");
   const [statusFilter, setStatus]   = useState("all");
   const [sort, setSort]             = useState("newest");
-  const [toasts, setToasts]         = useState([]);
   const [modal, setModal]           = useState({ open: false, task: null });
   const [confirm, setConfirm]       = useState({ open: false, task: null });
   const [darkMode, setDarkMode]     = useState(() => {
@@ -240,15 +223,6 @@ export default function App() {
     localStorage.setItem("darkMode", JSON.stringify(darkMode));
   }, [darkMode]);
 
-  // Toast helpers
-  const toast = useCallback((message, type = "info") => {
-    const id = Date.now();
-    setToasts((p) => [...p, { id, message, type }]);
-    setTimeout(() => setToasts((p) => p.filter((t) => t.id !== id)), 4000);
-  }, []);
-
-  const removeToast = useCallback((id) => setToasts((p) => p.filter((t) => t.id !== id)), []);
-
   // Fetch tasks
   const fetchTasks = useCallback(async (s = search, st = statusFilter, so = sort) => {
     try {
@@ -261,11 +235,11 @@ export default function App() {
       setTasks(res.data.data);
       setStats(res.data.stats);
     } catch (err) {
-      toast(err.message, "error");
+      toast.error(err.message);
     } finally {
       setLoading(false);
     }
-  }, [search, statusFilter, sort, toast]);
+  }, [search, statusFilter, sort]);
 
   useEffect(() => { fetchTasks(); }, []);
 
@@ -285,15 +259,15 @@ export default function App() {
     try {
       if (modal.task) {
         await API.put(`/tasks/${modal.task._id}`, form);
-        toast("Task updated successfully!", "success");
+        toast.success("Task Updated Successfully");
       } else {
         await API.post("/tasks", form);
-        toast("Task created successfully!", "success");
+        toast.success("Task Created Successfully");
       }
       setModal({ open: false, task: null });
       fetchTasks();
     } catch (err) {
-      toast(err.message, "error");
+      toast.error(err.message);
     } finally {
       setSaving(false);
     }
@@ -303,11 +277,11 @@ export default function App() {
     setDeleting(true);
     try {
       await API.delete(`/tasks/${confirm.task._id}`);
-      toast("Task deleted.", "success");
+      toast.success("Task Deleted Successfully");
       setConfirm({ open: false, task: null });
       fetchTasks();
     } catch (err) {
-      toast(err.message, "error");
+      toast.error(err.message);
     } finally {
       setDeleting(false);
     }
@@ -317,7 +291,16 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
-      <ToastContainer toasts={toasts} onRemove={removeToast} />
+      <ToastContainer
+        position="top-right"
+        autoClose={3000}
+        hideProgressBar={false}
+        newestOnTop
+        closeOnClick
+        pauseOnHover
+        draggable
+        theme={darkMode ? "dark" : "light"}
+      />
       <ConfirmModal isOpen={confirm.open} title="Delete Task" loading={deleting}
         message={`Are you sure you want to delete "${confirm.task?.title}"? This action cannot be undone.`}
         onConfirm={handleDeleteConfirm} onCancel={() => setConfirm({ open: false, task: null })} />

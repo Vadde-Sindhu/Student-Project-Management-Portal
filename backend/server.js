@@ -9,12 +9,12 @@ app.use(express.json());
 
 // ─── In-Memory Fallback Store ────────────────────────────────────────────────
 let tasks = [
-  { _id: uuidv4(), title: "Design ER Diagram", description: "Create entity-relationship diagram for the database schema", status: "completed", createdAt: new Date("2025-01-10T08:00:00Z") },
-  { _id: uuidv4(), title: "Setup React Project", description: "Initialize Vite + React + Tailwind CSS project structure", status: "completed", createdAt: new Date("2025-01-12T09:30:00Z") },
-  { _id: uuidv4(), title: "Build REST API", description: "Develop Express.js REST API with full CRUD operations", status: "in-progress", createdAt: new Date("2025-01-15T10:00:00Z") },
-  { _id: uuidv4(), title: "Implement Authentication", description: "Add JWT-based user authentication and authorization", status: "in-progress", createdAt: new Date("2025-01-18T11:00:00Z") },
-  { _id: uuidv4(), title: "Write Unit Tests", description: "Write unit and integration tests for all API endpoints", status: "pending", createdAt: new Date("2025-01-20T14:00:00Z") },
-  { _id: uuidv4(), title: "Deploy to Production", description: "Configure CI/CD pipeline and deploy application to cloud", status: "pending", createdAt: new Date("2025-01-22T16:00:00Z") },
+  { _id: uuidv4(), title: "Design ER Diagram", description: "Create entity-relationship diagram for the database schema", status: "completed", createdAt: new Date("2026-06-01T08:00:00Z") },
+  { _id: uuidv4(), title: "Setup React Project", description: "Initialize Vite + React + Tailwind CSS project structure", status: "completed", createdAt: new Date("2026-06-08T09:30:00Z") },
+  { _id: uuidv4(), title: "Build REST API", description: "Develop Express.js REST API with full CRUD operations", status: "in-progress", createdAt: new Date("2026-06-14T10:00:00Z") },
+  { _id: uuidv4(), title: "Implement Authentication", description: "Add JWT-based user authentication and authorization", status: "in-progress", createdAt: new Date("2026-06-18T11:00:00Z") },
+  { _id: uuidv4(), title: "Write Unit Tests", description: "Write unit and integration tests for all API endpoints", status: "pending", createdAt: new Date("2026-06-22T14:00:00Z") },
+  { _id: uuidv4(), title: "Deploy to Production", description: "Configure CI/CD pipeline and deploy application to cloud", status: "pending", createdAt: new Date("2026-06-25T16:00:00Z") },
 ];
 
 // ─── DB Connection (MongoDB → MySQL → PostgreSQL → In-Memory) ────────────────
