@@ -135,15 +135,19 @@ function TaskModal({ isOpen, task, onClose, onSave, loading }) {
 }
 
 // ─── Stat Card ────────────────────────────────────────────────────────────────
-function StatCard({ label, value, icon, color }) {
+function StatCard({ label, value, icon, color, active, onClick }) {
   return (
-    <div className="card p-5 flex items-center gap-4 hover:shadow-md transition-shadow">
-      <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-2xl ${color}`}>{icon}</div>
+    <button
+      onClick={onClick}
+      className={`card p-5 flex items-center gap-4 hover:shadow-md transition-all duration-200 text-left w-full
+        ${active ? "ring-2 ring-indigo-500 dark:ring-indigo-400 shadow-md" : "hover:-translate-y-0.5"}`}
+    >
+      <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-2xl flex-shrink-0 ${color}`}>{icon}</div>
       <div>
         <p className="text-2xl font-bold">{value ?? "—"}</p>
         <p className="text-sm text-gray-500 dark:text-gray-400">{label}</p>
       </div>
-    </div>
+    </button>
   );
 }
 
@@ -151,17 +155,29 @@ function StatCard({ label, value, icon, color }) {
 function TaskCard({ task, onEdit, onDelete }) {
   const cfg = STATUS_CONFIG[task.status];
   return (
-    <div className="card p-5 hover:shadow-md transition-all duration-200 animate-fade-in group">
+    <div className="card p-5 hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 animate-fade-in flex flex-col">
       <div className="flex items-start justify-between gap-3 mb-3">
         <h3 className="font-semibold text-gray-900 dark:text-gray-100 leading-snug flex-1 line-clamp-2">{task.title}</h3>
         <span className={cfg.badge}><span className={`w-1.5 h-1.5 rounded-full ${cfg.dot}`} />{cfg.label}</span>
       </div>
-      {task.description && <p className="text-sm text-gray-500 dark:text-gray-400 mb-4 line-clamp-3">{task.description}</p>}
-      <div className="flex items-center justify-between mt-auto pt-3 border-t border-gray-100 dark:border-gray-800">
+      <p className="text-sm text-gray-500 dark:text-gray-400 mb-4 line-clamp-3 flex-1 min-h-[3rem]">
+        {task.description || <span className="italic opacity-50">No description</span>}
+      </p>
+      <div className="flex items-center justify-between pt-3 border-t border-gray-100 dark:border-gray-800">
         <span className="text-xs text-gray-400 dark:text-gray-500">📅 {formatDate(task.createdAt)}</span>
-        <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-          <button onClick={() => onEdit(task)} className="btn-ghost text-xs px-2.5 py-1.5">✏️ Edit</button>
-          <button onClick={() => onDelete(task)} className="btn text-xs px-2.5 py-1.5 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg">🗑️ Delete</button>
+        <div className="flex gap-1.5">
+          <button
+            onClick={() => onEdit(task)}
+            className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium bg-indigo-50 hover:bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:hover:bg-indigo-900/50 dark:text-indigo-300 transition-colors"
+          >
+            ✏️ Edit
+          </button>
+          <button
+            onClick={() => onDelete(task)}
+            className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium bg-red-50 hover:bg-red-100 text-red-700 dark:bg-red-900/30 dark:hover:bg-red-900/50 dark:text-red-300 transition-colors"
+          >
+            🗑️ Delete
+          </button>
         </div>
       </div>
     </div>
@@ -216,7 +232,6 @@ export default function App() {
     const stored = localStorage.getItem("darkMode");
     return stored ? JSON.parse(stored) : window.matchMedia("(prefers-color-scheme: dark)").matches;
   });
-  const [dbInfo, setDbInfo]         = useState("");
   const searchTimer                 = useRef(null);
 
   // Dark mode effect
@@ -251,11 +266,6 @@ export default function App() {
       setLoading(false);
     }
   }, [search, statusFilter, sort, toast]);
-
-  // Health check for DB info
-  useEffect(() => {
-    API.get("/health").then((r) => setDbInfo(r.data.dbType)).catch(() => setDbInfo("offline"));
-  }, []);
 
   useEffect(() => { fetchTasks(); }, []);
 
@@ -304,7 +314,6 @@ export default function App() {
   };
 
   const isFiltered = search || statusFilter !== "all";
-  const DB_BADGE = { mongo: "🍃 MongoDB", mysql: "🐬 MySQL", postgres: "🐘 PostgreSQL", memory: "💾 In-Memory", offline: "⚠️ Offline" };
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
@@ -320,10 +329,7 @@ export default function App() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between gap-4">
           <div className="flex items-center gap-3">
             <span className="text-3xl">🎓</span>
-            <div>
-              <h1 className="text-lg font-bold leading-tight">Student Project Portal</h1>
-              <span className="text-xs text-gray-400 dark:text-gray-500">{DB_BADGE[dbInfo] || "🔄 Connecting..."}</span>
-            </div>
+            <h1 className="text-lg font-bold leading-tight">Student Project Portal</h1>
           </div>
           <div className="flex items-center gap-2">
             <button onClick={() => setDarkMode((d) => !d)} className="btn-ghost p-2 rounded-xl text-lg" title="Toggle dark mode">
@@ -339,10 +345,10 @@ export default function App() {
       <main className="max-w-7xl mx-auto px-4 sm:px-6 py-8 space-y-8">
         {/* Stats */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <StatCard label="Total Tasks"   value={stats.total}      icon="📋" color="bg-indigo-100 dark:bg-indigo-900/30" />
-          <StatCard label="Pending"       value={stats.pending}    icon="⏳" color="bg-yellow-100 dark:bg-yellow-900/30" />
-          <StatCard label="In Progress"   value={stats.inProgress} icon="🔄" color="bg-blue-100 dark:bg-blue-900/30" />
-          <StatCard label="Completed"     value={stats.completed}  icon="✅" color="bg-green-100 dark:bg-green-900/30" />
+          <StatCard label="Total Tasks"   value={stats.total}      icon="📋" color="bg-indigo-100 dark:bg-indigo-900/30" active={statusFilter === "all"}         onClick={() => handleFilterChange("all")} />
+          <StatCard label="Pending"       value={stats.pending}    icon="⏳" color="bg-yellow-100 dark:bg-yellow-900/30" active={statusFilter === "pending"}     onClick={() => handleFilterChange("pending")} />
+          <StatCard label="In Progress"   value={stats.inProgress} icon="🔄" color="bg-blue-100 dark:bg-blue-900/30"   active={statusFilter === "in-progress"} onClick={() => handleFilterChange("in-progress")} />
+          <StatCard label="Completed"     value={stats.completed}  icon="✅" color="bg-green-100 dark:bg-green-900/30" active={statusFilter === "completed"}   onClick={() => handleFilterChange("completed")} />
         </div>
 
         {/* Search, Filter, Sort */}

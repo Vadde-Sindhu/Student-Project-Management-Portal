@@ -170,13 +170,22 @@ app.get("/api/health", (req, res) => {
 // GET all tasks (with optional search, filter, sort)
 app.get("/api/tasks", async (req, res) => {
   try {
-    let result = await DB.getAll();
+    let all = await DB.getAll();
 
     // Convert to plain objects for uniform handling
-    if (dbType === "mongo") result = result.map((t) => ({ _id: t._id.toString(), title: t.title, description: t.description, status: t.status, createdAt: t.createdAt }));
-    else if (dbType === "mysql" || dbType === "postgres") result = result.map((t) => ({ _id: t.id, title: t.title, description: t.description, status: t.status, createdAt: t.createdAt }));
+    if (dbType === "mongo") all = all.map((t) => ({ _id: t._id.toString(), title: t.title, description: t.description, status: t.status, createdAt: t.createdAt }));
+    else if (dbType === "mysql" || dbType === "postgres") all = all.map((t) => ({ _id: t.id, title: t.title, description: t.description, status: t.status, createdAt: t.createdAt }));
+
+    // Stats always reflect ALL tasks (not filtered)
+    const stats = {
+      total: all.length,
+      pending: all.filter((t) => t.status === "pending").length,
+      inProgress: all.filter((t) => t.status === "in-progress").length,
+      completed: all.filter((t) => t.status === "completed").length,
+    };
 
     const { search, status, sort } = req.query;
+    let result = [...all];
 
     if (search) {
       const q = search.toLowerCase();
@@ -185,13 +194,6 @@ app.get("/api/tasks", async (req, res) => {
     if (status && status !== "all") result = result.filter((t) => t.status === status);
     if (sort === "oldest") result = result.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
     else result = result.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-
-    const stats = {
-      total: result.length,
-      pending: result.filter((t) => t.status === "pending").length,
-      inProgress: result.filter((t) => t.status === "in-progress").length,
-      completed: result.filter((t) => t.status === "completed").length,
-    };
 
     res.json({ success: true, data: result, stats });
   } catch (err) {
